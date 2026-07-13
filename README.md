@@ -1,4 +1,4 @@
-# AI-Powered Self-Adjustable & Self-Cleaning Solar PV Cell System
+# AI-Powered Self-Adjustable & Self-Cleaning Solar (PV) Cell System
 
 An intelligent solar energy optimization system that uses **Computer Vision** and **Artificial Intelligence** to maximize solar panel efficiency. The system automatically adjusts the panel orientation based on sunlight direction and detects dust or debris on the panel surface to initiate an automated cleaning process.
 
@@ -94,13 +94,8 @@ AI_Project/
 
 ---
 
-## Contributors
-
-- **Pravin Pinjarkar**
-- **Arnav Sowale**
-
 ---
 
-## 📜 License
+## License
 
 This project is developed for educational and research purposes.
