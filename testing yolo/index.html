@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Panel Cleaning Intelligence System</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>AI_CP GROUP 15</h1>
+      <p class="subtitle">Advanced AI Detection & Automated Cleaning System</p>
+    </header>
+
+    <!-- Status Dashboard -->
+    <div class="status-dashboard">
+      <div class="status-card" id="backendStatusCard">
+        <div class="status-label">Backend Server</div>
+        <div class="status-value">
+          <div class="status-dot offline"></div>
+          <span id="backendStatusText">Connecting...</span>
+        </div>
+      </div>
+      <div class="status-card" id="yoloStatusCard">
+        <div class="status-label">YOLO Engine</div>
+        <div class="status-value">
+          <div class="status-dot offline"></div>
+          <span id="yoloStatusText">Offline</span>
+        </div>
+      </div>
+      <div class="status-card" id="arduinoStatusCard">
+        <div class="status-label">Arduino System</div>
+        <div class="status-value">
+          <div class="status-dot offline"></div>
+          <span id="arduinoStatusText">Disconnected</span>
+        </div>
+      </div>
+      <div class="status-card">
+        <div class="status-label">Panel Cleanliness</div>
+        <div class="status-value" id="cleanlinessPercent">--</div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Left Column: Video & Detection -->
+      <div>
+        <!-- Video Feed Card -->
+        <div class="card video-section">
+          <div class="card-title">📹 Live YOLO Detection Feed</div>
+          <div class="video-container">
+            <canvas id="videoFeed"></canvas>
+            <div class="video-overlay offline" id="videoStatus">🔴 No Feed</div>
+            <div class="frame-counter" id="frameCounter">Frame: 0 | FPS: 0</div>
+          </div>
+        </div>
+
+        <!-- Detection Analytics Card -->
+        <div class="card">
+          <div class="card-title">🎯 Detection Analytics</div>
+          <div class="detection-grid">
+            <div class="stat-box" id="detectionBox">
+              <div class="stat-label">Total Detections</div>
+              <div class="stat-value" id="dirtCount">0</div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="detectionBar" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Confidence Level</div>
+              <div class="stat-value" id="confidence">0%</div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="confidenceBar" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="stat-box" id="contaminationBox">
+              <div class="stat-label">Contamination</div>
+              <div class="stat-value" id="contaminationPercent">0%</div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="contaminationBar" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detected Objects -->
+          <div class="detected-objects" id="detectedObjectsContainer">
+            <h4>🔍 Detected Objects</h4>
+            <div class="objects-list" id="objectsList">
+              <span style="color: #888;">Waiting for detections...</span>
+            </div>
+          </div>
+
+          <!-- Motor Control -->
+          <div class="motor-section">
+            <h4 style="color: #00ff88; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9em;">⚙ Brush Motor</h4>
+            <div class="motor-grid" style="grid-template-columns: 1fr;">
+              <div class="motor-card" id="brushMotor">
+                <div class="motor-name">Brush Motor Status</div>
+                <div class="motor-detail">Status: <span id="brushStatus">Idle</span></div>
+                <div class="motor-detail">RPM: <span id="brushRPM">0</span></div>
+                <div class="motor-detail">Direction: <span id="brushDir">N/A</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LDR Sensors -->
+          <div class="ldr-section">
+            <h4 style="color: #00ff88; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9em;">📊 LDR Sensors (Solar Tracker)</h4>
+            <div class="ldr-grid">
+              <div class="ldr-item">
+                <div class="ldr-label">LDR1 (Top-Left)</div>
+                <div class="ldr-value" id="ldr1Value">---</div>
+                <div class="ldr-delta" id="ldr1Delta">Δ 0</div>
+              </div>
+              <div class="ldr-item">
+                <div class="ldr-label">LDR2 (Bottom-Right)</div>
+                <div class="ldr-value" id="ldr2Value">---</div>
+                <div class="ldr-delta" id="ldr2Delta">Δ 0</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 12px; margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div style="text-align: center;">
+                <div style="font-size: 0.75em; color: #888; text-transform: uppercase;">Average Light</div>
+                <div style="font-size: 1.4em; color: #00ff88; font-weight: bold;" id="avgLight">---</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 0.75em; color: #888; text-transform: uppercase;">Difference</div>
+                <div style="font-size: 1.4em; color: #00ff88; font-weight: bold;" id="difference">---</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 12px; margin-top: 12px;">
+              <div style="font-size: 0.75em; color: #888; text-transform: uppercase; margin-bottom: 8px;">Balance Status</div>
+              <div style="font-size: 1.2em; color: #00ff88; font-weight: bold;" id="balanceStatus">Initializing...</div>
+            </div>
+          </div>
+
+          <!-- Control Panel -->
+          <div class="control-section">
+            <div class="button-group">
+              <button onclick="triggerClean()">▶ Start Cleaning</button>
+              <button onclick="stopClean()" class="danger">⏹ Stop Cleaning</button>
+              <button onclick="toggleAutoMode()">🔄 Toggle Auto Mode</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Info & Status -->
+      <div>
+        <div class="card">
+          <div class="card-title">ℹ️ System Information</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Total Frames</div>
+              <div class="info-value" id="totalFrames">0</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Current FPS</div>
+              <div class="info-value" id="currentFPS">0</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Cleaning Cycles</div>
+              <div class="info-value" id="cleanCycles">0</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">System Uptime</div>
+              <div class="info-value" id="uptimeDisplay">0:00:00</div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div style="margin-top: 20px;">
+            <h4 style="color: #00ff88; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9em;">📋 Recent Activity</h4>
+            <div class="timeline" id="timeline">
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="timeline-time">Now</div>
+                  <div class="timeline-text">System initialized</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export/Clear -->
+          <div class="control-section">
+            <div class="button-group">
+              <button onclick="exportData()">💾 Export Report</button>
+              <button onclick="clearData()">🗑️ Clear Data</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="card-title">📈 Contamination History</div>
+        <canvas id="historyChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">📊 Detection Distribution</div>
+        <canvas id="distributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+   <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+</body>
+</html>
